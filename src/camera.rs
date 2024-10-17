@@ -1,3 +1,5 @@
+use crate::rtweekend::random_double_range;
+
 use super::ray::Ray;
 use super::rtweekend::degrees_to_radians;
 use super::vec3::Vec3;
@@ -10,6 +12,8 @@ pub struct Camera {
     u: Vec3,
     v: Vec3,
     _w: Vec3,
+    time0: f64,
+    time1: f64,
 }
 impl Camera {
     pub fn new(
@@ -20,6 +24,8 @@ impl Camera {
         aspect: f64,
         aperture: f64,
         focus_dist: f64,
+        t0: f64,
+        t1: f64,
     ) -> Camera {
         let w = Vec3::unit_vector(lookfrom - lookat);
         let u = Vec3::unit_vector(Vec3::cross(vup, w));
@@ -39,6 +45,8 @@ impl Camera {
             u,
             v,
             _w: w,
+            time0: t0,
+            time1: t1,
         }
     }
     pub fn get_ray(&self, s: f64, t: f64) -> Ray {
@@ -47,6 +55,7 @@ impl Camera {
         Ray::from(
             self.origin + offset,
             self.lower_left_corner + s * self.horizontal + t * self.vertical - self.origin - offset,
+            random_double_range(self.time0, self.time1),
         )
     }
 }

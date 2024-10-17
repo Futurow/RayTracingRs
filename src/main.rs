@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use ray_tracing_rs::camera::Camera;
-use ray_tracing_rs::hittable::{HitRecord, Sphere};
+use ray_tracing_rs::hittable::{HitRecord, MovingSphere, Sphere};
 use ray_tracing_rs::hittable_list::HittableList;
 use ray_tracing_rs::material::{Dielectric, Lambertian, Metal};
 use ray_tracing_rs::ray::Ray;
@@ -11,9 +11,10 @@ fn main() {
     let stdout = std::io::stdout();
     let image_width = 1600;
     let image_height = 800;
+    let samples_per_pixel = 100;
     // let image_width = 400;
     // let image_height = 200;
-    let samples_per_pixel = 100;
+    // let samples_per_pixel = 10;
     let max_depth = 50;
     let aspect_ratio = image_width as f64 / image_height as f64;
     print!("P3\n{} {}\n255\n", image_width, image_height);
@@ -21,7 +22,7 @@ fn main() {
     let lookat = Vec3::from(0.0, 0.0, 0.0);
     let vup = Vec3::from(0.0, 1.0, 0.0);
     let dist_to_focus = 10.0;
-    let aperture = 0.1;
+    let aperture = 0.0;
     let cam: Camera = Camera::new(
         lookfrom,
         lookat,
@@ -30,6 +31,8 @@ fn main() {
         aspect_ratio,
         aperture,
         dist_to_focus,
+        0.0,
+        1.0,
     );
     let world = random_scene();
     for j in (0..image_height).rev() {
@@ -90,8 +93,11 @@ fn random_scene() -> HittableList {
                 if choose_mat < 0.8 {
                     // diffuse
                     let albedo = Vec3::random() * Vec3::random();
-                    world.add(Rc::new(Sphere::from(
+                    world.add(Rc::new(MovingSphere::from(
                         center,
+                        center + Vec3::from(0.0, random_double_range(0.0, 0.5), 0.0),
+                        0.0,
+                        1.0,
                         0.2,
                         Rc::new(Lambertian::from(albedo)),
                     )));
