@@ -1,5 +1,6 @@
 use std::rc::Rc;
 
+use super::aabb::AABB;
 use super::hittable::{HitRecord, Hittable};
 use super::ray::Ray;
 #[derive(Default)]
@@ -18,7 +19,10 @@ impl HittableList {
     pub fn add(&mut self, object: Rc<dyn Hittable>) {
         self.objects.push(object);
     }
-    pub fn hit(&self, r: &Ray, t_min: f64, t_max: f64, rec: &mut HitRecord) -> bool {
+}
+
+impl Hittable for HittableList {
+    fn hit(&self, r: &Ray, t_min: f64, t_max: f64, rec: &mut HitRecord) -> bool {
         let mut temp_rec = HitRecord::new();
         let mut hit_anything = false;
         let mut closest_so_far = t_max;
@@ -30,5 +34,24 @@ impl HittableList {
             }
         }
         return hit_anything;
+    }
+
+    fn bounding_box(&self, t0: f64, t1: f64, output_box: &mut AABB) -> bool {
+        if self.objects.is_empty() {
+            return false;
+        }
+        let mut temp_box: AABB = AABB::new();
+        let first_box: bool = true;
+        for object in self.objects.iter() {
+            if !object.bounding_box(t0, t1, &mut temp_box) {
+                return false;
+            }
+            *output_box = if first_box {
+                temp_box
+            } else {
+                AABB::surrounding_box(&output_box, &temp_box)
+            };
+        }
+        true
     }
 }

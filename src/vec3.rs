@@ -4,7 +4,7 @@ use super::rtweekend::{clamp, random_double, random_double_range};
 use std::io::Write;
 #[derive(Clone, Copy, Debug)]
 pub struct Vec3 {
-    e: [f64; 3],
+    pub e: [f64; 3],
 }
 //初始化与获取值
 impl Vec3 {

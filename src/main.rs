@@ -1,20 +1,23 @@
 use std::rc::Rc;
+use std::time::Instant;
 
 use ray_tracing_rs::camera::Camera;
-use ray_tracing_rs::hittable::{HitRecord, MovingSphere, Sphere};
+use ray_tracing_rs::hittable::{BvhNode, HitRecord, Hittable, MovingSphere, Sphere};
 use ray_tracing_rs::hittable_list::HittableList;
 use ray_tracing_rs::material::{Dielectric, Lambertian, Metal};
 use ray_tracing_rs::ray::Ray;
 use ray_tracing_rs::rtweekend::{random_double, random_double_range, INFINITY};
 use ray_tracing_rs::vec3::Vec3;
 fn main() {
+    eprintln!("开始计时");
+    let start = Instant::now(); // 开始计时
     let stdout = std::io::stdout();
     let image_width = 1600;
     let image_height = 800;
     let samples_per_pixel = 100;
     // let image_width = 400;
     // let image_height = 200;
-    // let samples_per_pixel = 10;
+    // let samples_per_pixel = 6;
     let max_depth = 50;
     let aspect_ratio = image_width as f64 / image_height as f64;
     print!("P3\n{} {}\n255\n", image_width, image_height);
@@ -51,6 +54,8 @@ fn main() {
         }
     }
     eprintln!("\nDone.");
+    let duration = start.elapsed(); // 停止计时并获取持续时间
+    eprintln!("执行时间为: {:?}", duration); // 打印执行时间
 }
 
 fn ray_color(r: &Ray, world: &HittableList, depth: i32) -> Vec3 {
@@ -136,5 +141,6 @@ fn random_scene() -> HittableList {
         1.0,
         Rc::new(Metal::from(Vec3::from(0.7, 0.6, 0.5), 0.0)),
     )));
-    return world;
+    let len = world.objects.len();
+    HittableList::new(Rc::new(BvhNode::from(&mut world.objects, 0, len, 0.0, 1.0)))
 }
