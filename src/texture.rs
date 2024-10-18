@@ -1,3 +1,4 @@
+use super::perlin::Pelin;
 use super::rtweekend::*;
 use super::vec3::Vec3;
 pub trait Texture {
@@ -47,5 +48,33 @@ impl Texture for CheckerTexture {
         } else {
             self.even.as_ref().unwrap().value(u, v, p)
         }
+    }
+}
+
+pub struct NoiseTexture {
+    noise: Pelin,
+    scale: f64,
+}
+impl NoiseTexture {
+    pub fn new() -> NoiseTexture {
+        NoiseTexture {
+            noise: Pelin::new(),
+            scale: 5.0,
+        }
+    }
+    pub fn from(scale: f64) -> NoiseTexture {
+        NoiseTexture {
+            noise: Pelin::new(),
+            scale,
+        }
+    }
+}
+impl Texture for NoiseTexture {
+    fn value(&self, _u: f64, _v: f64, p: &Vec3) -> Vec3 {
+        // let temp_p = Vec3::from(self.scale * p.x(), self.scale * p.y(), self.scale * p.z());
+        // return (1.0 + self.noise.noise(&temp_p)) * 0.5 * Vec3::from(1.0, 1.0, 1.0);
+        Vec3::from(1.0, 1.0, 1.0)
+            * 0.5
+            * (1.0 + (self.scale * p.z() + 10.0 * self.noise.turb(&p, None)).sin())
     }
 }
