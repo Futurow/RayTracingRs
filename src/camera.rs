@@ -1,7 +1,5 @@
-use crate::rtweekend::random_double_range;
-
 use super::ray::Ray;
-use super::rtweekend::degrees_to_radians;
+use super::rtweekend::*;
 use super::vec3::Vec3;
 pub struct Camera {
     lower_left_corner: Vec3,

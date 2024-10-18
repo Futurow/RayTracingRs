@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use super::rtweekend::*;
 
 use super::aabb::AABB;
 use super::hittable::{HitRecord, Hittable};

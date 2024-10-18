@@ -6,7 +6,8 @@ use ray_tracing_rs::hittable::{BvhNode, HitRecord, Hittable, MovingSphere, Spher
 use ray_tracing_rs::hittable_list::HittableList;
 use ray_tracing_rs::material::{Dielectric, Lambertian, Metal};
 use ray_tracing_rs::ray::Ray;
-use ray_tracing_rs::rtweekend::{random_double, random_double_range, INFINITY};
+use ray_tracing_rs::rtweekend::*;
+use ray_tracing_rs::texture::{CheckerTexture, ConstantTexture};
 use ray_tracing_rs::vec3::Vec3;
 fn main() {
     eprintln!("开始计时");
@@ -15,10 +16,11 @@ fn main() {
     let image_width = 1600;
     let image_height = 800;
     let samples_per_pixel = 100;
+    let max_depth = 50;
     // let image_width = 400;
     // let image_height = 200;
-    // let samples_per_pixel = 6;
-    let max_depth = 50;
+    // let samples_per_pixel = 100;
+    // let max_depth = 3;
     let aspect_ratio = image_width as f64 / image_height as f64;
     print!("P3\n{} {}\n255\n", image_width, image_height);
     let lookfrom = Vec3::from(13.0, 2.0, 3.0);
@@ -38,6 +40,7 @@ fn main() {
         1.0,
     );
     let world = random_scene();
+    // let world = two_spheres();
     for j in (0..image_height).rev() {
         eprint!("\rScanlines remaining: {}", j);
         for i in 0..image_width {
@@ -78,13 +81,38 @@ fn ray_color(r: &Ray, world: &HittableList, depth: i32) -> Vec3 {
     let t = 0.5 * (unit_direction.y() + 1.0);
     (1.0 - t) * Vec3::from(1.0, 1.0, 1.0) + t * Vec3::from(0.5, 0.7, 1.0)
 }
+fn _two_spheres() -> HittableList {
+    let mut world: HittableList = HittableList::default();
+    //网格纹理
+    let checker = Rc::new(CheckerTexture::from(
+        Rc::new(ConstantTexture::from(Vec3::from(0.2, 0.3, 0.1))),
+        Rc::new(ConstantTexture::from(Vec3::from(0.9, 0.9, 0.9))),
+    ));
+    world.add(Rc::new(Sphere::from(
+        Vec3::from(0.0, -10.0, 0.0),
+        10.0,
+        Rc::new(Lambertian::from(checker.clone())),
+    )));
+    world.add(Rc::new(Sphere::from(
+        Vec3::from(0.0, 10.0, 0.0),
+        10.0,
+        Rc::new(Lambertian::from(checker)),
+    )));
+    let len = world.objects.len();
+    HittableList::new(Rc::new(BvhNode::from(&mut world.objects, 0, len, 0.0, 1.0)))
+}
+
 fn random_scene() -> HittableList {
     let mut world: HittableList = HittableList::default();
-
+    //网格纹理
+    let checker = Rc::new(CheckerTexture::from(
+        Rc::new(ConstantTexture::from(Vec3::from(0.2, 0.3, 0.1))),
+        Rc::new(ConstantTexture::from(Vec3::from(0.9, 0.9, 0.9))),
+    ));
     world.add(Rc::new(Sphere::from(
         Vec3::from(0.0, -1000.0, 0.0),
         1000.0,
-        Rc::new(Lambertian::from(Vec3::from(0.5, 0.5, 0.5))),
+        Rc::new(Lambertian::from(checker)),
     )));
     for a in -11..11 {
         for b in -11..11 {
@@ -104,7 +132,7 @@ fn random_scene() -> HittableList {
                         0.0,
                         1.0,
                         0.2,
-                        Rc::new(Lambertian::from(albedo)),
+                        Rc::new(Lambertian::from(Rc::new(ConstantTexture::from(albedo)))),
                     )));
                 } else if choose_mat < 0.95 {
                     // metal
@@ -134,7 +162,9 @@ fn random_scene() -> HittableList {
     world.add(Rc::new(Sphere::from(
         Vec3::from(-4.0, 1.0, 0.0),
         1.0,
-        Rc::new(Lambertian::from(Vec3::from(0.4, 0.2, 0.1))),
+        Rc::new(Lambertian::from(Rc::new(ConstantTexture::from(
+            Vec3::from(0.4, 0.2, 0.1),
+        )))),
     )));
     world.add(Rc::new(Sphere::from(
         Vec3::from(4.0, 1.0, 0.0),

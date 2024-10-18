@@ -1,6 +1,6 @@
 use crate::rtweekend::PI;
 
-use super::rtweekend::{clamp, random_double, random_double_range};
+use super::rtweekend::*;
 use std::io::Write;
 #[derive(Clone, Copy, Debug)]
 pub struct Vec3 {

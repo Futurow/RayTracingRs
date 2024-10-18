@@ -1,8 +1,4 @@
-use super::{
-    ray::Ray,
-    rtweekend::{ffmax, ffmin},
-    vec3::Vec3,
-};
+use super::{ray::Ray, rtweekend::*, vec3::Vec3};
 #[derive(Clone, Copy, Debug)]
 pub struct AABB {
     pub min: Vec3,

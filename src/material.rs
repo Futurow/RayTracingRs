@@ -1,6 +1,7 @@
 use super::hittable::HitRecord;
 use super::ray::Ray;
-use super::rtweekend::{ffmin, random_double};
+use super::rtweekend::*;
+use super::texture::Texture;
 use super::vec3::Vec3;
 pub trait Material {
     fn scatter(
@@ -12,11 +13,11 @@ pub trait Material {
     ) -> bool;
 }
 pub struct Lambertian {
-    albedo: Vec3,
+    albedo: Option<Rc<dyn Texture>>,
 }
 impl Lambertian {
-    pub fn from(a: Vec3) -> Lambertian {
-        Lambertian { albedo: a }
+    pub fn from(a: Rc<dyn Texture>) -> Lambertian {
+        Lambertian { albedo: Some(a) }
     }
 }
 impl Material for Lambertian {
@@ -29,7 +30,7 @@ impl Material for Lambertian {
     ) -> bool {
         let scatter_direction = rec.normal + Vec3::random_unit_vector();
         *scattered = Ray::from(rec.p, scatter_direction, r_in.time());
-        *attenuation = self.albedo;
+        *attenuation = self.albedo.as_ref().unwrap().value(rec.u, rec.v, &rec.p);
         true
     }
 }

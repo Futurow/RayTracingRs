@@ -1,5 +1,5 @@
+use super::rtweekend::*;
 use std::cmp::Ordering;
-use std::rc::Rc;
 
 use rand::Rng;
 
@@ -19,6 +19,8 @@ pub struct HitRecord {
     pub t: f64,
     pub front_face: bool,
     pub material: Option<Rc<dyn Material>>,
+    pub u: f64,
+    pub v: f64,
 }
 impl HitRecord {
     pub fn new() -> HitRecord {
@@ -28,6 +30,8 @@ impl HitRecord {
             t: 0.0,
             front_face: false,
             material: None,
+            u: 0.0,
+            v: 0.0,
         }
     }
     fn set_face_normal(&mut self, r: &Ray, outward_normal: Vec3) {
