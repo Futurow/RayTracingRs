@@ -7,7 +7,7 @@ use ray_tracing_rs::hittable_list::HittableList;
 use ray_tracing_rs::material::{Dielectric, Lambertian, Metal};
 use ray_tracing_rs::ray::Ray;
 use ray_tracing_rs::rtweekend::*;
-use ray_tracing_rs::texture::{CheckerTexture, ConstantTexture, NoiseTexture};
+use ray_tracing_rs::texture::{CheckerTexture, ConstantTexture, ImageTexture, NoiseTexture};
 use ray_tracing_rs::vec3::Vec3;
 fn main() {
     eprintln!("开始计时");
@@ -40,7 +40,8 @@ fn main() {
         1.0,
     );
     // let world = random_scene();
-    let world = two_spheres();
+    // let world = two_spheres();
+    let world = earth();
     for j in (0..image_height).rev() {
         eprint!("\rScanlines remaining: {}", j);
         for i in 0..image_width {
@@ -81,7 +82,13 @@ fn ray_color(r: &Ray, world: &HittableList, depth: i32) -> Vec3 {
     let t = 0.5 * (unit_direction.y() + 1.0);
     (1.0 - t) * Vec3::from(1.0, 1.0, 1.0) + t * Vec3::from(0.5, 0.7, 1.0)
 }
-fn two_spheres() -> HittableList {
+fn earth() -> HittableList {
+    let earth_img_texture = Rc::new(ImageTexture::from("imageTexture/earthmap.jpg"));
+    let earth_surface = Rc::new(Lambertian::from(earth_img_texture));
+    let globe = Rc::new(Sphere::from(Vec3::from(0.0, 0.0, 0.0), 2.0, earth_surface));
+    HittableList::new(globe)
+}
+fn _two_spheres() -> HittableList {
     let mut world: HittableList = HittableList::default();
     //网格纹理
     // let checker = Rc::new(CheckerTexture::from(

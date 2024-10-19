@@ -56,6 +56,13 @@ impl Sphere {
             material,
         }
     }
+    fn get_sphere_uv(p: &Vec3, u: &mut f64, v: &mut f64) {
+        let phi = (-p.z()).atan2(p.x()) + PI;
+        let theta = (-p.y()).acos();
+
+        *u = phi / (2.0 * PI);
+        *v = theta / PI;
+    }
 }
 impl Hittable for Sphere {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64, hit_record: &mut HitRecord) -> bool {
@@ -83,6 +90,11 @@ impl Hittable for Sphere {
                     let outward_normal = (hit_record.p - self.center) / self.radius;
                     hit_record.set_face_normal(r, outward_normal);
                     hit_record.material = Some(Rc::clone(&self.material));
+                    Self::get_sphere_uv(
+                        &((hit_record.p - self.center) / self.radius),
+                        &mut hit_record.u,
+                        &mut hit_record.v,
+                    );
                     return true;
                 }
                 _ => {
