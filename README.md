@@ -24,3 +24,12 @@ cargo build --release
 ![大理石材质](png/大理石材质.png)
 #### 贴图效果
 ![地球贴图](png/贴图.png)
+#### Cornell_Box与烟雾
+![Cornell_Box与烟雾](png/Cornell_Box与烟雾.png)
+#### 最终场景
+![最终场景](png/最终场景.png)
+
+### 参考文档
+[Ray Tracing: The Next Week](https://raytracing.github.io/books/RayTracingTheNextWeek.html)
+[Ray Tracing: The Next Week V3.0中文翻译（上）](https://zhuanlan.zhihu.com/p/129372723#:~:text=%E6%9C%AC%E4%B9%A6%E4%B8%BAPeterShirley%E7%9A%84Ray%20tracing%E5%85%A5%E9%97%A8%E6%95%99%E5%AD%A6%E7%B3%BB%E5%88%97%E7%9A%84%E7%AC%AC%E4%BA%8C%E6%9C%AC%E3%80%82%E5%BD%93%E5%89%8D%E7%89%88%E6%9C%ACv3.0%E3%80%82%E6%9C%AC%E4%B9%A6%E5%9C%A8%E7%AC%AC%E4%B8%80%E6%9C%AC%E7%9A%84%E5%9F%BA%E7%A1%80%E4%B8%8A%E5%8A%A0%E5%85%A5%E4%BA%86%E4%B8%80%E4%BA%9B%E6%96%B0%E7%9A%84%E7%89%B9%E6%80%A7,)
+[Ray Tracing: The Next Week V3.0中文翻译（下）](https://zhuanlan.zhihu.com/p/129745508)

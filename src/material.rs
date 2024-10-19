@@ -11,6 +11,9 @@ pub trait Material {
         attenuation: &mut Vec3,
         scattered: &mut Ray,
     ) -> bool;
+    fn emitted(&self, _u: f64, _v: f64, _p: &Vec3) -> Vec3 {
+        return Vec3::new();
+    }
 }
 pub struct Lambertian {
     albedo: Option<Rc<dyn Texture>>,
@@ -103,6 +106,49 @@ impl Material for Dielectric {
         }
         let refracted = Vec3::refract(unit_direction, rec.normal, etai_over_etat);
         *scattered = Ray::from(rec.p, refracted, r_in.time());
+        return true;
+    }
+}
+pub struct DiffuseLight {
+    emit: Option<Rc<dyn Texture>>,
+}
+impl DiffuseLight {
+    pub fn from(a: Rc<dyn Texture>) -> DiffuseLight {
+        DiffuseLight { emit: Some(a) }
+    }
+}
+impl Material for DiffuseLight {
+    fn scatter(
+        &self,
+        _r_in: &Ray,
+        _rec: &HitRecord,
+        _attenuation: &mut Vec3,
+        _scattered: &mut Ray,
+    ) -> bool {
+        return false;
+    }
+    fn emitted(&self, u: f64, v: f64, p: &Vec3) -> Vec3 {
+        self.emit.as_deref().unwrap().value(u, v, p)
+    }
+}
+pub struct Isotropic {
+    albedo: Rc<dyn Texture>,
+}
+impl Isotropic {
+    pub fn from(a: Rc<dyn Texture>) -> Isotropic {
+        Isotropic { albedo: a }
+    }
+}
+impl Material for Isotropic {
+    fn scatter(
+        &self,
+        r_in: &Ray,
+        rec: &HitRecord,
+        attenuation: &mut Vec3,
+        scattered: &mut Ray,
+    ) -> bool {
+        *scattered = Ray::from(rec.p, Vec3::random_in_unit_sphere(), r_in.time());
+        *attenuation = self.albedo.value(rec.u, rec.v, &rec.p);
         return true;
     }
 }

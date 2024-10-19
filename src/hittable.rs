@@ -1,3 +1,7 @@
+use crate::hittable_list::HittableList;
+use crate::material::Isotropic;
+use crate::texture::Texture;
+
 use super::rtweekend::*;
 use std::cmp::Ordering;
 
@@ -186,7 +190,6 @@ impl Hittable for MovingSphere {
         true
     }
 }
-
 pub struct BvhNode {
     pub left: Option<Rc<dyn Hittable>>,
     pub right: Option<Rc<dyn Hittable>>,
@@ -298,5 +301,380 @@ impl Hittable for BvhNode {
     fn bounding_box(&self, _t0: f64, _t1: f64, output_box: &mut AABB) -> bool {
         *output_box = self.aabb_box;
         true
+    }
+}
+pub struct XyRect {
+    x0: f64,
+    x1: f64,
+    y0: f64,
+    y1: f64,
+    k: f64,
+    material: Rc<dyn Material>,
+}
+pub struct XzRect {
+    x0: f64,
+    x1: f64,
+    z0: f64,
+    z1: f64,
+    k: f64,
+    material: Rc<dyn Material>,
+}
+pub struct YzRect {
+    y0: f64,
+    y1: f64,
+    z0: f64,
+    z1: f64,
+    k: f64,
+    material: Rc<dyn Material>,
+}
+impl XyRect {
+    pub fn from(x0: f64, x1: f64, y0: f64, y1: f64, k: f64, material: Rc<dyn Material>) -> XyRect {
+        XyRect {
+            x0,
+            x1,
+            y0,
+            y1,
+            k,
+            material,
+        }
+    }
+}
+impl XzRect {
+    pub fn from(x0: f64, x1: f64, z0: f64, z1: f64, k: f64, material: Rc<dyn Material>) -> XzRect {
+        XzRect {
+            x0,
+            x1,
+            z0,
+            z1,
+            k,
+            material,
+        }
+    }
+}
+impl YzRect {
+    pub fn from(y0: f64, y1: f64, z0: f64, z1: f64, k: f64, material: Rc<dyn Material>) -> YzRect {
+        YzRect {
+            y0,
+            y1,
+            z0,
+            z1,
+            k,
+            material,
+        }
+    }
+}
+impl Hittable for XyRect {
+    fn hit(&self, r: &Ray, t_min: f64, t_max: f64, hit_record: &mut HitRecord) -> bool {
+        let t = (self.k - r.origin().z()) / r.direction().z();
+        if t < t_min || t > t_max {
+            return false;
+        }
+        let x = r.origin().x() + t * r.direction().x();
+        let y = r.origin().y() + t * r.direction().y();
+        if x < self.x0 || x > self.x1 || y < self.y0 || y > self.y1 {
+            return false;
+        }
+        hit_record.u = (x - self.x0) / (self.x1 - self.x0);
+        hit_record.v = (y - self.y0) / (self.y1 - self.y0);
+        hit_record.t = t;
+        let outward_normal = Vec3::from(0.0, 0.0, 1.0);
+        hit_record.set_face_normal(r, outward_normal);
+        hit_record.material = Some(self.material.clone());
+        hit_record.p = r.at(t);
+        true
+    }
+    fn bounding_box(&self, _t0: f64, _t1: f64, output_box: &mut AABB) -> bool {
+        *output_box = AABB::from(
+            Vec3::from(self.x0, self.y0, self.k - 0.0001),
+            Vec3::from(self.x1, self.y1, self.k + 0.0001),
+        );
+        return true;
+    }
+}
+impl Hittable for XzRect {
+    fn hit(&self, r: &Ray, t_min: f64, t_max: f64, hit_record: &mut HitRecord) -> bool {
+        let t = (self.k - r.origin().y()) / r.direction().y();
+        if t < t_min || t > t_max {
+            return false;
+        }
+        let x = r.origin().x() + t * r.direction().x();
+        let z = r.origin().z() + t * r.direction().z();
+        if x < self.x0 || x > self.x1 || z < self.z0 || z > self.z1 {
+            return false;
+        }
+        hit_record.u = (x - self.x0) / (self.x1 - self.x0);
+        hit_record.v = (z - self.z0) / (self.z1 - self.z0);
+        hit_record.t = t;
+        let outward_normal = Vec3::from(0.0, 1.0, 0.0);
+        hit_record.set_face_normal(r, outward_normal);
+        hit_record.material = Some(self.material.clone());
+        hit_record.p = r.at(t);
+        true
+    }
+    fn bounding_box(&self, _t0: f64, _t1: f64, output_box: &mut AABB) -> bool {
+        *output_box = AABB::from(
+            Vec3::from(self.x0, self.k - 0.0001, self.z0),
+            Vec3::from(self.x1, self.k + 0.0001, self.z1),
+        );
+        return true;
+    }
+}
+impl Hittable for YzRect {
+    fn hit(&self, r: &Ray, t_min: f64, t_max: f64, hit_record: &mut HitRecord) -> bool {
+        let t = (self.k - r.origin().x()) / r.direction().x();
+        if t < t_min || t > t_max {
+            return false;
+        }
+        let y = r.origin().y() + t * r.direction().y();
+        let z = r.origin().z() + t * r.direction().z();
+        if y < self.y0 || y > self.y1 || z < self.z0 || z > self.z1 {
+            return false;
+        }
+        hit_record.u = (y - self.y0) / (self.y1 - self.y0);
+        hit_record.v = (z - self.z0) / (self.z1 - self.z0);
+        hit_record.t = t;
+        let outward_normal = Vec3::from(1.0, 0.0, 0.0);
+        hit_record.set_face_normal(r, outward_normal);
+        hit_record.material = Some(self.material.clone());
+        hit_record.p = r.at(t);
+        true
+    }
+    fn bounding_box(&self, _t0: f64, _t1: f64, output_box: &mut AABB) -> bool {
+        *output_box = AABB::from(
+            Vec3::from(self.k - 0.0001, self.y0, self.z0),
+            Vec3::from(self.k + 0.0001, self.y1, self.z1),
+        );
+        return true;
+    }
+}
+pub struct RectBox {
+    box_min: Vec3,
+    box_max: Vec3,
+    sides: HittableList,
+}
+impl RectBox {
+    pub fn from(p0: Vec3, p1: Vec3, material: Rc<dyn Material>) -> RectBox {
+        let mut sides: HittableList = HittableList::default();
+        sides.add(Rc::new(XyRect::from(
+            p0.x(),
+            p1.x(),
+            p0.y(),
+            p1.y(),
+            p1.z(),
+            material.clone(),
+        )));
+        sides.add(Rc::new(XyRect::from(
+            p0.x(),
+            p1.x(),
+            p0.y(),
+            p1.y(),
+            p0.z(),
+            material.clone(),
+        )));
+        sides.add(Rc::new(XzRect::from(
+            p0.x(),
+            p1.x(),
+            p0.z(),
+            p1.z(),
+            p1.y(),
+            material.clone(),
+        )));
+        sides.add(Rc::new(XzRect::from(
+            p0.x(),
+            p1.x(),
+            p0.z(),
+            p1.z(),
+            p0.y(),
+            material.clone(),
+        )));
+        sides.add(Rc::new(YzRect::from(
+            p0.y(),
+            p1.y(),
+            p0.z(),
+            p1.z(),
+            p1.x(),
+            material.clone(),
+        )));
+        sides.add(Rc::new(YzRect::from(
+            p0.y(),
+            p1.y(),
+            p0.z(),
+            p1.z(),
+            p0.x(),
+            material,
+        )));
+        RectBox {
+            box_min: p0,
+            box_max: p1,
+            sides,
+        }
+    }
+}
+impl Hittable for RectBox {
+    fn hit(&self, r: &Ray, t_min: f64, t_max: f64, hit_record: &mut HitRecord) -> bool {
+        self.sides.hit(r, t_min, t_max, hit_record)
+    }
+    fn bounding_box(&self, _t0: f64, _t1: f64, output_box: &mut AABB) -> bool {
+        *output_box = AABB::from(self.box_min, self.box_max);
+        true
+    }
+}
+pub struct Translate {
+    hittable: Rc<dyn Hittable>,
+    offset: Vec3,
+}
+impl Translate {
+    pub fn from(p: Rc<dyn Hittable>, displacement: Vec3) -> Translate {
+        Translate {
+            hittable: p,
+            offset: displacement,
+        }
+    }
+}
+impl Hittable for Translate {
+    fn hit(&self, r: &Ray, t_min: f64, t_max: f64, hit_record: &mut HitRecord) -> bool {
+        let moved_r = Ray::from(r.origin() - self.offset, r.direction(), r.time());
+        if !self.hittable.hit(&moved_r, t_min, t_max, hit_record) {
+            return false;
+        }
+        hit_record.p += self.offset;
+        hit_record.set_face_normal(&moved_r, hit_record.normal);
+        return true;
+    }
+    fn bounding_box(&self, t0: f64, t1: f64, output_box: &mut AABB) -> bool {
+        if !self.hittable.bounding_box(t0, t1, output_box) {
+            return false;
+        }
+        *output_box = AABB::from(output_box.min + self.offset, output_box.max + self.offset);
+
+        return true;
+    }
+}
+pub struct RotateY {
+    hittable: Rc<dyn Hittable>,
+    sin_theta: f64,
+    cos_theta: f64,
+    hasbox: bool,
+    bbox: AABB,
+}
+impl RotateY {
+    pub fn from(p: Rc<dyn Hittable>, angle: f64) -> RotateY {
+        let mut bbox = AABB::new();
+        let radians = degrees_to_radians(angle);
+        let sin_theta = radians.sin();
+        let cos_theta = radians.cos();
+        let hasbox = p.bounding_box(0.0, 1.0, &mut bbox);
+
+        let mut min = Vec3::from(INFINITY, INFINITY, INFINITY);
+        let mut max = Vec3::from(-INFINITY, -INFINITY, -INFINITY);
+        for i in 0..2 {
+            for j in 0..2 {
+                for k in 0..2 {
+                    let x = i as f64 * bbox.max.x() + (1 - i) as f64 * bbox.min.x();
+                    let y = j as f64 * bbox.max.y() + (1 - j) as f64 * bbox.min.y();
+                    let z = k as f64 * bbox.max.z() + (1 - k) as f64 * bbox.min.z();
+                    let newx = cos_theta * x + sin_theta * z;
+                    let newz = -sin_theta * x + cos_theta * z;
+                    let tester = Vec3::from(newx, y, newz);
+                    for c in 0..3 {
+                        min[c] = ffmin(min[c], tester[c]);
+                        max[c] = ffmax(max[c], tester[c]);
+                    }
+                }
+            }
+        }
+        RotateY {
+            hittable: p,
+            sin_theta,
+            cos_theta,
+            hasbox,
+            bbox: AABB::from(min, max),
+        }
+    }
+}
+impl Hittable for RotateY {
+    fn bounding_box(&self, _t0: f64, _t1: f64, output_box: &mut AABB) -> bool {
+        *output_box = self.bbox;
+        return self.hasbox;
+    }
+    fn hit(&self, r: &Ray, t_min: f64, t_max: f64, hit_record: &mut HitRecord) -> bool {
+        let mut origin = r.origin();
+        let mut direction = r.direction();
+
+        origin[0] = self.cos_theta * r.origin()[0] - self.sin_theta * r.origin()[2];
+        origin[2] = self.sin_theta * r.origin()[0] + self.cos_theta * r.origin()[2];
+
+        direction[0] = self.cos_theta * r.direction()[0] - self.sin_theta * r.direction()[2];
+        direction[2] = self.sin_theta * r.direction()[0] + self.cos_theta * r.direction()[2];
+        let rotated_r = Ray::from(origin, direction, r.time());
+        if !self.hittable.hit(&rotated_r, t_min, t_max, hit_record) {
+            return false;
+        }
+        let mut p = hit_record.p;
+        let mut normal = hit_record.normal;
+        p[0] = self.cos_theta * hit_record.p[0] + self.sin_theta * hit_record.p[2];
+        p[2] = -self.sin_theta * hit_record.p[0] + self.cos_theta * hit_record.p[2];
+
+        normal[0] = self.cos_theta * hit_record.normal[0] + self.sin_theta * hit_record.normal[2];
+        normal[2] = -self.sin_theta * hit_record.normal[0] + self.cos_theta * hit_record.normal[2];
+
+        hit_record.p = p;
+        hit_record.set_face_normal(&rotated_r, normal);
+
+        return true;
+    }
+}
+pub struct ConstantMedium {
+    boundary: Rc<dyn Hittable>,
+    phase_function: Rc<dyn Material>,
+    neg_inv_density: f64,
+}
+impl ConstantMedium {
+    pub fn from(b: Rc<dyn Hittable>, d: f64, a: Rc<dyn Texture>) -> ConstantMedium {
+        ConstantMedium {
+            boundary: b,
+            neg_inv_density: -1.0 / d,
+            phase_function: Rc::new(Isotropic::from(a)),
+        }
+    }
+}
+impl Hittable for ConstantMedium {
+    fn bounding_box(&self, t0: f64, t1: f64, output_box: &mut AABB) -> bool {
+        self.boundary.bounding_box(t0, t1, output_box)
+    }
+    fn hit(&self, r: &Ray, t_min: f64, t_max: f64, hit_record: &mut HitRecord) -> bool {
+        let mut rec1 = HitRecord::new();
+        let mut rec2 = HitRecord::new();
+        if !self.boundary.hit(r, -INFINITY, INFINITY, &mut rec1) {
+            return false;
+        }
+
+        if !self.boundary.hit(r, rec1.t + 0.0001, INFINITY, &mut rec2) {
+            return false;
+        }
+        if rec1.t < t_min {
+            rec1.t = t_min;
+        }
+        if rec2.t > t_max {
+            rec2.t = t_max;
+        }
+        if rec1.t >= rec2.t {
+            return false;
+        }
+        if rec1.t < 0.0 {
+            rec1.t = 0.0;
+        }
+        let ray_length = r.direction().length();
+        let distance_inside_boundary = (rec2.t - rec1.t) * ray_length;
+        let hit_distance = self.neg_inv_density * (random_double().ln());
+        if hit_distance > distance_inside_boundary {
+            return false;
+        }
+        hit_record.t = rec1.t + hit_distance / ray_length;
+        hit_record.p = r.at(hit_record.t);
+        hit_record.normal = Vec3::from(1.0, 0.0, 0.0); // arbitrary
+        hit_record.front_face = true; // also arbitrary
+        hit_record.material = Some(self.phase_function.clone());
+        return true;
     }
 }
